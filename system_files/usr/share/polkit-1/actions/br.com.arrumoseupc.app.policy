@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE policyconfig PUBLIC "-//freedesktop//DTD PolicyKit Policy Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/PolicyKit/1/policyconfig.dtd">
+<policyconfig>
+  <vendor>Arrumo Seu PC</vendor>
+  <vendor_url>https://www.arrumoseupc.com.br</vendor_url>
+  <!-- O coletor só LÊ (SMART, dmidecode, série) e não aceita argumento: quem está
+       sentado na frente do PC roda sem senha; sessão remota/inativa pede a do admin. -->
+  <action id="br.com.arrumoseupc.app.coleta">
+    <description>Ler a saúde dos discos e os pentes de memória</description>
+    <message>O Arrumo-App precisa ler a saúde dos discos e os pentes de memória</message>
+    <defaults>
+      <allow_any>auth_admin</allow_any>
+      <allow_inactive>auth_admin</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+    <annotate key="org.freedesktop.policykit.exec.path">/usr/libexec/arrumo-app/coleta-root</annotate>
+  </action>
+</policyconfig>

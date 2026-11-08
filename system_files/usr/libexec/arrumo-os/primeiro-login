@@ -1,0 +1,12 @@
+#!/usr/bin/bash
+# Uma vez por usuário: papel de parede do Arrumo-OS. Depois disso é dele — trocar não volta.
+MARCA="${XDG_CONFIG_HOME:-$HOME/.config}/arrumo-os/papel-de-parede-v1"
+[[ -e "$MARCA" ]] && exit 0
+IMG=/usr/share/wallpapers/ArrumoOS/contents/images/3840x2160.png
+for _ in $(seq 1 30); do          # o plasmashell sobe depois do autostart
+    if plasma-apply-wallpaperimage "$IMG" >/dev/null 2>&1; then
+        mkdir -p "$(dirname "$MARCA")" && touch "$MARCA"
+        exit 0
+    fi
+    sleep 2
+done

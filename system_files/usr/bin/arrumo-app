@@ -1,0 +1,13 @@
+#!/usr/bin/python3 -I
+"""Arrumo-App do Arrumo-OS. `arrumo-app --json` imprime o relatório sem abrir a janela."""
+import json
+import sys
+
+sys.path.insert(0, "/usr/lib/arrumo-app")
+
+if "--json" in sys.argv:
+    from arrumo_app import coleta
+    print(json.dumps(coleta.relatorio(), ensure_ascii=False, indent=2))
+else:
+    from arrumo_app.janela import main
+    sys.exit(main())

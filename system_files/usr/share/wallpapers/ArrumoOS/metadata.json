@@ -1,0 +1,8 @@
+{
+    "KPlugin": {
+        "Authors": [{ "Name": "Arrumo Seu PC" }],
+        "Id": "ArrumoOS",
+        "License": "CC-BY-SA-4.0",
+        "Name": "Arrumo-OS"
+    }
+}

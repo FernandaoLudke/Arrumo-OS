@@ -1,0 +1,116 @@
+#!/usr/bin/python3 -I
+"""Parte do diagnóstico que só o root lê: série da BIOS, pentes de memória (dmidecode)
+e SMART dos discos (smartctl). Chamado pelo Arrumo-App via pkexec — a regra do polkit
+libera sem senha para quem está sentado na frente do PC.
+
+Não recebe argumento nenhum e só lê: devolve um JSON no stdout e mais nada.
+"""
+import json
+import os
+import re
+import subprocess
+
+
+def rodar(*cmd, timeout=20):
+    try:
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout).stdout
+    except Exception:
+        return ""
+
+
+def ler(caminho):
+    try:
+        with open(caminho) as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
+GENERICO = re.compile(r"^(none|unknown|not specified|undefined|to be filled.*|0x0+|0+)$", re.I)
+
+
+def limpo(texto):
+    texto = (texto or "").strip()
+    return "" if GENERICO.match(texto) else texto
+
+
+def num(texto):
+    m = re.search(r"\d+", texto or "")
+    return int(m.group()) if m else 0
+
+
+def memoria():
+    blocos = rodar("/usr/sbin/dmidecode", "-t", "17").split("\n\n")
+    slots, modulos = 0, []
+    for b in blocos:
+        if "Memory Device" not in b:
+            continue
+        campos = dict(re.findall(r"^\s+([^:\n]+):\s*(.*)$", b, re.M))
+        slots += 1
+        tamanho = campos.get("Size", "")
+        if not tamanho or "No Module" in tamanho or "Not Installed" in tamanho:
+            continue
+        gb = num(tamanho) / 1024 if "MB" in tamanho else float(num(tamanho))
+        modulos.append({
+            "slot": limpo(campos.get("Locator")),
+            "fabricante": limpo(campos.get("Manufacturer")),
+            "modelo": limpo(campos.get("Part Number")),
+            "capacidade_gb": round(gb, 1),
+            "tipo": limpo(campos.get("Type")),
+            "velocidade": num(campos.get("Speed", "")),
+            "velocidade_atual": num(campos.get("Configured Memory Speed", "")
+                                    or campos.get("Configured Clock Speed", "")),
+        })
+    return {"slots": slots, "modulos": modulos}
+
+
+def smart(dev):
+    try:
+        d = json.loads(rodar("/usr/sbin/smartctl", "-j", "-a", dev, timeout=40) or "{}")
+    except ValueError:
+        return {}
+    passou = (d.get("smart_status") or {}).get("passed")
+    saude, desgaste = "", None
+    nvme = d.get("nvme_smart_health_information_log")
+    if nvme:
+        desgaste = nvme.get("percentage_used")
+        if nvme.get("critical_warning"):
+            saude = "Ruim"
+        elif nvme.get("media_errors"):
+            saude = "Atenção"
+    attrs = {a.get("id"): a for a in (d.get("ata_smart_attributes") or {}).get("table", [])}
+    if attrs:
+        ruins = sum((attrs.get(i) or {}).get("raw", {}).get("value", 0) for i in (5, 197, 198))
+        if ruins:
+            saude = "Atenção"
+        for i in (231, 177, 233, 202):        # vida útil restante do SSD SATA, normalizada 0–100
+            if i in attrs and 0 < attrs[i].get("value", 0) <= 100:
+                desgaste = 100 - attrs[i]["value"]
+                break
+    if passou is False:
+        saude = "Ruim"
+    elif passou and not saude:
+        saude = "Boa"
+    return {
+        "saude": saude,
+        "desgaste_pct": desgaste,
+        "temperatura_c": (d.get("temperature") or {}).get("current"),
+        "horas_ligado": (d.get("power_on_time") or {}).get("hours"),
+        "rotacao": d.get("rotation_rate"),
+    }
+
+
+def discos():
+    saida = {}
+    for nome in sorted(os.listdir("/sys/block")):
+        if re.match(r"(loop|ram|zram|dm-|sr|md|nbd)", nome):
+            continue
+        saida[nome] = smart("/dev/" + nome)
+    return saida
+
+
+print(json.dumps({
+    "serie": ler("/sys/class/dmi/id/product_serial"),
+    "memoria": memoria(),
+    "discos": discos(),
+}))

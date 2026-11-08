@@ -1,0 +1,10 @@
+#!/usr/bin/bash
+# Primeiro boot: programas que vêm como Flatpak (o Chrome não entra na imagem —
+# RPM dele escreve em /opt, que no bootc é do usuário). Roda até conseguir uma vez.
+set -euo pipefail
+LISTA=/usr/share/arrumo-os/flatpaks
+MARCA=/var/lib/arrumo-os/flatpaks-$(sha1sum "$LISTA" | cut -c1-12)
+[[ -e "$MARCA" ]] && exit 0
+flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+grep -vE '^\s*(#|$)' "$LISTA" | xargs flatpak install --system --noninteractive --or-update -y flathub
+mkdir -p /var/lib/arrumo-os && touch "$MARCA"

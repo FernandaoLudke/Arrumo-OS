@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Arrumo-App
+GenericName=Diagnóstico do PC
+Comment=Saúde dos discos, memória, temperaturas e relatório online da Arrumo Seu PC
+Exec=arrumo-app
+Icon=br.com.arrumoseupc.App
+Categories=System;Monitor;
+Keywords=diagnóstico;hardware;temperatura;smart;arrumo;
