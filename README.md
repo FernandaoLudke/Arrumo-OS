@@ -40,9 +40,14 @@ sudo bootc switch ghcr.io/fernandaoludke/arrumo-os:latest
 
 ## NVIDIA
 
-`bazzite:stable` serve para AMD e Intel. Placa NVIDIA (GTX 16xx / RTX) precisa da base
-`ghcr.io/ublue-os/bazzite-nvidia-open:stable` (`BASE_IMAGE` no Containerfile) — ainda não há
-build separado.
+O Actions publica duas imagens do mesmo Containerfile: `arrumo-os` (base `bazzite`, AMD/Intel)
+e `arrumo-os-nvidia` (base `bazzite-nvidia-open`, GTX 16xx / RTX). A ISO é uma só e instala a de
+AMD/Intel; no primeiro boot o `arrumo-gpu.service` vê se há placa NVIDIA e troca para a outra
+(`bootc switch`), reiniciando sozinho se ninguém estiver logado — senão entra no próximo boot.
+
+A ISO sai da VPS (`./gerar-iso.sh`, ou `--so-iso` reaproveitando a imagem). O
+bootc-image-builder oficial exige CPU x86-64-v3 e o Xeon da VPS não tem: o gerador é o de
+`builder/` (o mesmo programa, em cima do Fedora).
 
 ## Anticheat
 

@@ -17,6 +17,10 @@ sed -i "s|^PRETTY_NAME=.*|PRETTY_NAME=\"Arrumo-OS (base Bazzite ${VERSAO_BASE})\
 
 gtk-update-icon-cache -f /usr/share/icons/hicolor || true
 
+# Qual das duas imagens é esta: o arrumo-gpu.service compara com a placa da máquina
+echo "${ARRUMO_VARIANTE:-amd}" > /usr/share/arrumo-os/variante
+systemctl enable arrumo-gpu.service
+
 # Chrome e outros Flatpaks: instalados no primeiro boot (lista em /usr/share/arrumo-os/flatpaks)
 systemctl enable arrumo-flatpaks.service
 

@@ -1,0 +1,13 @@
+[Unit]
+Description=Arrumo-OS: troca para a imagem da placa de vídeo (AMD/Intel ou NVIDIA)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/arrumo-os/conferir-gpu
+Restart=on-failure
+RestartSec=120
+
+[Install]
+WantedBy=multi-user.target

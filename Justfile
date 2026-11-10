@@ -99,6 +99,9 @@ build $target_image=image_name $tag=default_tag:
     set -euox pipefail
 
     BUILD_ARGS=()
+    # Variante NVIDIA: o workflow exporta BASE_IMAGE e ARRUMO_VARIANTE (ver Containerfile)
+    [[ -n "${BASE_IMAGE:-}" ]] && BUILD_ARGS+=("--build-arg" "BASE_IMAGE=${BASE_IMAGE}")
+    [[ -n "${ARRUMO_VARIANTE:-}" ]] && BUILD_ARGS+=("--build-arg" "ARRUMO_VARIANTE=${ARRUMO_VARIANTE}")
     LABELS=()
     if [[ -z "$(git status -s)" ]]; then
         GIT_SHA=$(git rev-parse --short HEAD)

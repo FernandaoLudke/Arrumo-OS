@@ -1,5 +1,6 @@
 # ISO de instalação (Anaconda). Depois de instalar, o sistema passa a seguir a imagem
-# publicada no GitHub — é de lá que vêm as atualizações automáticas.
+# publicada no GitHub — é de lá que vêm as atualizações automáticas. Sempre aponta para a
+# de AMD/Intel: com placa NVIDIA, o arrumo-gpu.service troca no primeiro boot.
 [customizations.installer.kickstart]
 contents = """
 %post

@@ -1,0 +1,12 @@
+# bootc-image-builder que roda na VPS. A imagem oficial é CentOS Stream 10, que exige
+# x86-64-v3 (AVX2), e o Xeon L5640 não tem ("CPU does not support x86-64-v3").
+# A oficial é só o image-builder com outro nome (ele muda de modo pelo argv[0]):
+# aqui é o mesmo link, em cima do image-builder-cli, que é Fedora.
+FROM ghcr.io/osbuild/image-builder-cli:latest
+RUN ln /usr/bin/image-builder /usr/bin/bootc-image-builder
+ENTRYPOINT ["/usr/bin/bootc-image-builder"]
+VOLUME /output
+WORKDIR /output
+VOLUME /store
+VOLUME /rpmmd
+VOLUME /var/lib/containers/storage

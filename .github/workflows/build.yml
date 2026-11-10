@@ -17,13 +17,23 @@ env:
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"  # do not edit
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}-${{ inputs.brand_name}}-${{ inputs.stream_name }}
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
   build_push:
-    name: Build and push image
+    name: Build and push ${{ matrix.nome }}
     runs-on: ubuntu-26.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nome: arrumo-os
+            base: ghcr.io/ublue-os/bazzite:stable
+            variante: amd
+          - nome: arrumo-os-nvidia
+            base: ghcr.io/ublue-os/bazzite-nvidia-open:stable
+            variante: nvidia
 
     permissions:
       contents: read
@@ -31,6 +41,8 @@ jobs:
       id-token: write
 
     env:
+      BASE_IMAGE: ${{ matrix.base }}
+      ARRUMO_VARIANTE: ${{ matrix.variante }}
       # assinatura cosign só roda depois de cadastrar o segredo SIGNING_SECRET no repositório
       TEM_ASSINATURA: ${{ secrets.SIGNING_SECRET != '' }}
 
@@ -53,7 +65,7 @@ jobs:
       - name: Image Name
         id: image-name
         run: |
-          IMAGE_NAME=$(just image_name)
+          IMAGE_NAME=${{ matrix.nome }}
 
           echo "IMAGE_NAME=${IMAGE_NAME}" >> $GITHUB_ENV
 

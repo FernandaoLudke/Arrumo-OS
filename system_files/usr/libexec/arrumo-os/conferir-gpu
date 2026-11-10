@@ -1,0 +1,29 @@
+#!/usr/bin/bash
+# Uma ISO só para AMD/Intel e NVIDIA: a ISO instala a imagem de AMD/Intel e, se a máquina
+# tiver placa NVIDIA (vendor 0x10de, classe de vídeo 0x03), aqui troca para a arrumo-os-nvidia,
+# que traz o driver. Notebook híbrido (Intel + NVIDIA) também vai para a NVIDIA.
+# A troca fica preparada (staged) e entra no próximo boot; se ninguém estiver logado
+# (primeiro boot, tela de login), reinicia na hora.
+set -euo pipefail
+REG=ghcr.io/fernandaoludke
+
+atual=$(cat /usr/share/arrumo-os/variante 2>/dev/null || echo amd)
+quer=amd
+for d in /sys/bus/pci/devices/*; do
+    [[ "$(cat "$d/vendor")" == 0x10de && "$(cat "$d/class")" == 0x03* ]] && quer=nvidia
+done
+[[ "$quer" == "$atual" ]] && exit 0
+
+alvo=$REG/arrumo-os; [[ "$quer" == nvidia ]] && alvo=$REG/arrumo-os-nvidia
+# Já preparada (o serviço rodou de novo antes do reboot): nada a fazer
+staged=$(bootc status --format=json 2>/dev/null | python3 -c '
+import json, sys
+s = (json.load(sys.stdin).get("status") or {}).get("staged") or {}
+print(int(((s.get("image") or {}).get("image") or {}).get("image") == sys.argv[1]))' "$alvo:latest" || echo 0)
+if [[ $staged == 0 ]]; then
+    echo "placa $quer, imagem $atual: trocando para $alvo:latest"
+    bootc switch "$alvo:latest"
+fi
+if ! loginctl list-sessions --no-legend 2>/dev/null | awk '{print $3}' | grep -qv '^sddm$\|^$'; then
+    systemctl reboot
+fi
